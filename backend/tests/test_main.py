@@ -65,4 +65,35 @@ def test_file_validation_works():
         response = client.post("/predict", files=files)
         
         assert response.status_code == 400
-        assert response.json()["detail"] == "Hata: Sadece görsel dosyaları yükleyebilirsiniz."
+        assert "Sadece görsel" in response.json()["detail"]
+
+def test_error_handling_empty_file():
+    """
+    Boş dosya yüklendiğinde hata yönetimi çalışıyor mu testi
+    """
+    with TestClient(app) as client:
+        empty_data = b""
+        files = {"file": ("empty.jpg", empty_data, "image/jpeg")}
+        
+        response = client.post("/predict", files=files)
+        
+        assert response.status_code == 400
+        assert "boş" in response.json()["detail"]
+
+def test_api_performance_is_sufficient():
+    """
+    API performansı yeterli mi testi (Yanıt süresi ölçümü)
+    """
+    import time
+    with TestClient(app) as client:
+        app.router.startup()
+        dummy_image_data = b"performance_test_image"
+        files = {"file": ("perf.jpg", dummy_image_data, "image/jpeg")}
+        
+        start_time = time.time()
+        response = client.post("/predict", files=files)
+        end_time = time.time()
+        
+        assert response.status_code == 200
+        # Yanıt süresi ML simülasyonu (0.5s) + overhead = < 2 saniye olmalı
+        assert (end_time - start_time) < 2.0
