@@ -1,8 +1,18 @@
 import asyncio
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from app.model_loader import ModelLoader
 
 app = FastAPI(title="Zatürre Tespit Backend")
+
+# Mobil uygulama backend'e bağlanabilsin diye CORS ayarları (Backend son düzenlemesi)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Canlı ortamda sadece mobil uygulamanın origin'i girilmeli
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 model_loader = ModelLoader()
 
 @app.on_event("startup")
