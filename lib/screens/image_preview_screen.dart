@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'loading_screen.dart';
 
 class ImagePreviewScreen extends StatelessWidget {
   final String imagePath;
@@ -18,8 +19,11 @@ class ImagePreviewScreen extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Analiz ediliyor...')),
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LoadingScreen(imagePath: imagePath),
+                  ),
                 );
               },
               child: const Text('Analiz Et'),
