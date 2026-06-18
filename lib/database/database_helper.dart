@@ -51,6 +51,14 @@ class DatabaseHelper {
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE preferences (
+        user_id INTEGER PRIMARY KEY,
+        dark_mode INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    ''');
   }
 
   Future<int> registerUser(String name, String email, String password) async {
@@ -93,6 +101,27 @@ class DatabaseHelper {
       'avatar_path': avatarPath,
     };
     return await db.insert('profiles', data);
+  }
+
+  Future<void> saveUserPreferences(int userId, bool isDarkMode) async {
+    final db = await instance.database;
+    await db.insert('preferences', {
+      'user_id': userId,
+      'dark_mode': isDarkMode ? 1 : 0,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<bool> getUserPreferenceDarkMode(int userId) async {
+    final db = await instance.database;
+    final results = await db.query(
+      'preferences',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+    if (results.isNotEmpty) {
+      return results.first['dark_mode'] == 1;
+    }
+    return false;
   }
 
   Future<bool> testConnection() async {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../database/database_helper.dart';
+import '../main.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,6 +12,19 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    bool isDark = await DatabaseHelper.instance.getUserPreferenceDarkMode(1);
+    setState(() {
+      _darkModeEnabled = isDark;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,10 +44,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SwitchListTile(
             title: const Text('Karanlık Tema'),
             value: _darkModeEnabled,
-            onChanged: (bool value) {
+            onChanged: (bool value) async {
               setState(() {
                 _darkModeEnabled = value;
               });
+              await DatabaseHelper.instance.saveUserPreferences(1, value);
+              ZaturreTespitApp.of(context)?.changeTheme(value ? ThemeMode.dark : ThemeMode.light);
             },
           ),
           ListTile(
