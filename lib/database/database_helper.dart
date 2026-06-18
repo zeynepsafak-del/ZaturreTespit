@@ -29,6 +29,26 @@ class DatabaseHelper {
         password TEXT NOT NULL
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        image_path TEXT NOT NULL,
+        timestamp TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        bio TEXT,
+        avatar_path TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    ''');
   }
 
   Future<int> registerUser(String name, String email, String password) async {
@@ -39,6 +59,26 @@ class DatabaseHelper {
       'password': password,
     };
     return await db.insert('users', data);
+  }
+
+  Future<int> saveImageRecord(int userId, String imagePath) async {
+    final db = await instance.database;
+    final data = {
+      'user_id': userId,
+      'image_path': imagePath,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+    return await db.insert('images', data);
+  }
+
+  Future<int> saveProfileData(int userId, String bio, String avatarPath) async {
+    final db = await instance.database;
+    final data = {
+      'user_id': userId,
+      'bio': bio,
+      'avatar_path': avatarPath,
+    };
+    return await db.insert('profiles', data);
   }
 
   Future<bool> testConnection() async {
