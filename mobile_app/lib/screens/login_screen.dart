@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/validators.dart';
+import '../services/auth_service.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,12 +15,26 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      // Simulate successful login
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Giriş Başarılı!')),
-      );
+      try {
+        await AuthService().signInWithEmailAndPassword(
+          _emailController.text,
+          _passwordController.text,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Giriş Başarılı!')),
+          );
+          // Navigate to Home or handle auth state stream
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
+      }
     }
   }
 

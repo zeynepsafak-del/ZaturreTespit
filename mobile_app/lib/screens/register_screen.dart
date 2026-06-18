@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/validators.dart';
+import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -14,16 +15,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  void _register() {
+  void _register() async {
     if (_formKey.currentState!.validate()) {
-      // Simulate successful registration
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kayıt Başarılı!')),
-      );
-      // Navigate back to login
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) Navigator.pop(context);
-      });
+      try {
+        await AuthService().createUserWithEmailAndPassword(
+          _emailController.text,
+          _passwordController.text,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kayıt Başarılı!')),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
+      }
     }
   }
 
