@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'result_screen.dart';
+import '../api/api_service.dart';
+import '../database/database_helper.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String imagePath;
@@ -13,21 +15,42 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   void initState() {
     super.initState();
-    // 3 saniye sonra sonuç ekranına geçiş simülasyonu
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResultScreen(
-              imagePath: widget.imagePath,
-              prediction: "Zatürre Tespiti Yapılmadı", // Temsili veri
-              riskPercentage: 15.0, // %15 risk
-            ),
+    _analyzeImage();
+  }
+
+  Future<void> _analyzeImage() async {
+    final apiService = ApiService();
+    final result = await apiService.predictImage(widget.imagePath);
+
+    String prediction = "Bilinmiyor";
+    double risk = 0.0;
+
+    if (result != null) {
+      prediction = result['prediction'] ?? "Normal";
+      // Backend % olarak göndermiyorsa çarparız veya backend ne verirse
+      risk = (result['confidence'] ?? 0.0) * 100;
+    } else {
+      // Backend çalışmıyorsa simüle et
+      await Future.delayed(const Duration(seconds: 2));
+      prediction = "Zatürre (Simüle)";
+      risk = 85.5;
+    }
+
+    // Veritabanına kaydet (Örnek user_id = 1)
+    await DatabaseHelper.instance.saveImageRecord(1, widget.imagePath, prediction, risk);
+
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResultScreen(
+            imagePath: widget.imagePath,
+            prediction: prediction,
+            riskPercentage: risk,
           ),
-        );
-      }
-    });
+        ),
+      );
+    }
   }
 
   @override

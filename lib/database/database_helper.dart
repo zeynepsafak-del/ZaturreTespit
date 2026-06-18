@@ -35,6 +35,8 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         image_path TEXT NOT NULL,
+        prediction TEXT NOT NULL,
+        risk_percentage REAL NOT NULL,
         timestamp TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
@@ -61,14 +63,26 @@ class DatabaseHelper {
     return await db.insert('users', data);
   }
 
-  Future<int> saveImageRecord(int userId, String imagePath) async {
+  Future<int> saveImageRecord(int userId, String imagePath, String prediction, double riskPercentage) async {
     final db = await instance.database;
     final data = {
       'user_id': userId,
       'image_path': imagePath,
+      'prediction': prediction,
+      'risk_percentage': riskPercentage,
       'timestamp': DateTime.now().toIso8601String(),
     };
     return await db.insert('images', data);
+  }
+
+  Future<List<Map<String, dynamic>>> getAnalysisHistory(int userId) async {
+    final db = await instance.database;
+    return await db.query(
+      'images',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'timestamp DESC',
+    );
   }
 
   Future<int> saveProfileData(int userId, String bio, String avatarPath) async {

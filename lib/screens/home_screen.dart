@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'image_picker_screen.dart';
+import 'history_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -9,15 +10,31 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Ana Sayfa')),
       body: Center(
-        child: ElevatedButton.icon(
-          icon: const Icon(Icons.image),
-          label: const Text('Görsel Seç'),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ImagePickerScreen()),
-            );
-          },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton.icon(
+              icon: const Icon(Icons.image),
+              label: const Text('Görsel Seç'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ImagePickerScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.history),
+              label: const Text('Analiz Geçmişi'),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
