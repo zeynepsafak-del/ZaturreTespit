@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'loading_screen.dart';
 
 class ImagePreviewScreen extends StatelessWidget {
@@ -15,7 +16,9 @@ class ImagePreviewScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.file(File(imagePath), height: 300, fit: BoxFit.cover),
+            kIsWeb
+                ? Image.network(imagePath, height: 300, fit: BoxFit.cover)
+                : Image.file(File(imagePath), height: 300, fit: BoxFit.cover),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {

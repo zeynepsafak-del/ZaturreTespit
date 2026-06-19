@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'result_screen.dart';
 import '../api/api_service.dart';
 import '../database/database_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String imagePath;
@@ -32,12 +34,16 @@ class _LoadingScreenState extends State<LoadingScreen> {
     } else {
       // Backend çalışmıyorsa simüle et
       await Future.delayed(const Duration(seconds: 2));
-      prediction = "Zatürre (Simüle)";
-      risk = 85.5;
+      final random = Random();
+      final isZaturre = random.nextBool();
+      prediction = isZaturre ? "Zatürre (Simüle)" : "Normal (Simüle)";
+      risk = isZaturre ? (60.0 + random.nextDouble() * 35.0) : (5.0 + random.nextDouble() * 25.0);
     }
 
-    // Veritabanına kaydet (Örnek user_id = 1)
-    await DatabaseHelper.instance.saveImageRecord(1, widget.imagePath, prediction, risk);
+    // Veritabanına kaydet (Aktif kullanıcı)
+    final prefs = await SharedPreferences.getInstance();
+    final currentUserId = prefs.getInt('userId') ?? 1;
+    await DatabaseHelper.instance.saveImageRecord(currentUserId, widget.imagePath, prediction, risk);
 
     if (mounted) {
       Navigator.pushReplacement(
