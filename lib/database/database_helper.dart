@@ -1,0 +1,196 @@
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+
+class DatabaseHelper {
+  static final DatabaseHelper instance = DatabaseHelper._init();
+  static Database? _database;
+
+  DatabaseHelper._init();
+
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDB('zaturre.db');
+    return _database!;
+  }
+
+  Future<Database> _initDB(String filePath) async {
+    final dbPath = await getDatabasesPath();
+    final path = join(dbPath, filePath);
+
+    return await openDatabase(
+      path,
+      version: 1,
+      onCreate: _createDB,
+    );
+  }
+
+  Future<void> _createDB(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        image_path TEXT NOT NULL,
+        prediction TEXT NOT NULL,
+        risk_percentage REAL NOT NULL,
+        timestamp TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER UNIQUE,
+        bio TEXT,
+        avatar_path TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE preferences (
+        user_id INTEGER PRIMARY KEY,
+        dark_mode INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    ''');
+  }
+
+  Future<int> registerUser(
+      String name,
+      String email,
+      String password,
+      ) async {
+    final db = await instance.database;
+
+    final data = {
+      'name': name,
+      'email': email,
+      'password': password,
+    };
+
+    return await db.insert(
+      'users',
+      data,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<int> saveImageRecord(
+      int userId,
+      String imagePath,
+      String prediction,
+      double riskPercentage,
+      ) async {
+    final db = await instance.database;
+
+    final data = {
+      'user_id': userId,
+      'image_path': imagePath,
+      'prediction': prediction,
+      'risk_percentage': riskPercentage,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
+    return await db.insert('images', data);
+  }
+
+  Future<List<Map<String, dynamic>>> getAnalysisHistory(int userId) async {
+    final db = await instance.database;
+
+    return await db.query(
+      'images',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'timestamp DESC',
+    );
+  }
+
+  Future<Map<String, dynamic>?> getProfileData(int userId) async {
+    final db = await instance.database;
+
+    final result = await db.query(
+      'profiles',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      limit: 1,
+    );
+
+    if (result.isNotEmpty) {
+      return result.first;
+    }
+
+    return null;
+  }
+
+  Future<int> saveProfileData(
+      int userId,
+      String bio,
+      String avatarPath,
+      ) async {
+    final db = await instance.database;
+
+    final data = {
+      'user_id': userId,
+      'bio': bio,
+      'avatar_path': avatarPath,
+    };
+
+    return await db.insert(
+      'profiles',
+      data,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> saveUserPreferences(
+      int userId,
+      bool isDarkMode,
+      ) async {
+    final db = await instance.database;
+
+    await db.insert(
+      'preferences',
+      {
+        'user_id': userId,
+        'dark_mode': isDarkMode ? 1 : 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<bool> getUserPreferenceDarkMode(int userId) async {
+    final db = await instance.database;
+
+    final results = await db.query(
+      'preferences',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      limit: 1,
+    );
+
+    if (results.isNotEmpty) {
+      return results.first['dark_mode'] == 1;
+    }
+
+    return false;
+  }
+
+  Future<bool> testConnection() async {
+    try {
+      final db = await instance.database;
+      return db.isOpen;
+    } catch (e) {
+      return false;
+    }
+  }
+}
