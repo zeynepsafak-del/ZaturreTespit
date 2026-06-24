@@ -29,12 +29,12 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
     if (result != null) {
       prediction = result['prediction'] ?? "Normal";
-      // Backend % olarak göndermiyorsa çarparız veya backend ne verirse
       risk = (result['confidence'] ?? 0.0) * 100;
     } else {
-      // Backend çalışmıyorsa simüle et
+      // Backend çalışmıyorsa simüle et — aynı görsel her zaman aynı sonucu verir
       await Future.delayed(const Duration(seconds: 2));
-      final random = Random();
+      final seed = widget.imagePath.codeUnits.fold(0, (a, b) => a ^ b);
+      final random = Random(seed);
       final isZaturre = random.nextBool();
       prediction = isZaturre ? "Zatürre (Simüle)" : "Normal (Simüle)";
       risk = isZaturre ? (60.0 + random.nextDouble() * 35.0) : (5.0 + random.nextDouble() * 25.0);
